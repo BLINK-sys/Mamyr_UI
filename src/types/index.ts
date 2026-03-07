@@ -25,8 +25,10 @@ export interface Dish {
   price: number;
   weight: string;
   image: string;
+  active: boolean;
   categoryId: string;
   locationIds: string[];
+  stopLocationIds: string[];
   addons: Addon[];
 }
 

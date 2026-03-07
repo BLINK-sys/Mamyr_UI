@@ -20,6 +20,9 @@ interface DataContextType {
   footerSettings: FooterSettings;
   setFooterSettings: React.Dispatch<React.SetStateAction<FooterSettings>>;
   refreshData: () => void;
+  selectedLocation: string;
+  setSelectedLocation: React.Dispatch<React.SetStateAction<string>>;
+  toggleDishStop: (dishId: string, locationId: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -38,6 +41,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [staff, setStaff] = useState<Staff[]>(defaultStaff);
   const [orders, setOrders] = useState<Order[]>(defaultOrders);
   const [footerSettings, setFooterSettings] = useState<FooterSettings>(defaultFooterSettings);
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
   const fetchAll = useCallback(async () => {
     try {
@@ -57,6 +61,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: String(d.id),
         categoryId: String(d.categoryId),
         locationIds: d.locationIds.map(String),
+        stopLocationIds: (d.stopLocationIds || []).map(String),
+        active: d.active ?? true,
         addons: d.addons.map((a: any) => ({ ...a, id: String(a.id) })),
       })));
       if (bans) setBanners(bans.map((b: any) => ({ ...b, id: String(b.id) })));
@@ -71,7 +77,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         customerPhone: o.customerPhone,
         createdAt: o.createdAt,
         items: o.items.map((item: any) => ({
-          dish: { id: String(item.dishId), name: item.dishName, price: item.dishPrice, desc: "", ingredients: "", weight: "", image: "", categoryId: "", locationIds: [], addons: [] },
+          dish: { id: String(item.dishId), name: item.dishName, price: item.dishPrice, desc: "", ingredients: "", weight: "", image: "", active: true, categoryId: "", locationIds: [], stopLocationIds: [], addons: [] },
           quantity: item.quantity,
           addons: item.addons || [],
         })),
@@ -101,8 +107,29 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const toggleDishStop = async (dishId: string, locationId: string) => {
+    const dish = dishes.find((d) => d.id === dishId);
+    if (!dish) return;
+    const isOnStop = dish.stopLocationIds.includes(locationId);
+    // Optimistic update
+    setDishes((prev) => prev.map((d) =>
+      d.id === dishId
+        ? { ...d, stopLocationIds: isOnStop ? d.stopLocationIds.filter((id) => id !== locationId) : [...d.stopLocationIds, locationId] }
+        : d
+    ));
+    try {
+      if (isOnStop) {
+        await api.delete(`/dishes/${Number(dishId)}/stop/${Number(locationId)}`);
+      } else {
+        await api.post(`/dishes/${Number(dishId)}/stop`, { locationId: Number(locationId) });
+      }
+    } catch {
+      await fetchAll();
+    }
+  };
+
   return (
-    <DataContext.Provider value={{ locations, setLocations, categories, setCategories, dishes, setDishes, banners, setBanners, staff, setStaff, orders, setOrders, updateOrderStatus, footerSettings, setFooterSettings, refreshData: fetchAll }}>
+    <DataContext.Provider value={{ locations, setLocations, categories, setCategories, dishes, setDishes, banners, setBanners, staff, setStaff, orders, setOrders, updateOrderStatus, footerSettings, setFooterSettings, refreshData: fetchAll, selectedLocation, setSelectedLocation, toggleDishStop }}>
       {children}
     </DataContext.Provider>
   );

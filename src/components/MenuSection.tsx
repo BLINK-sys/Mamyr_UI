@@ -8,7 +8,7 @@ import type { Dish } from "@/types";
 import { api } from "@/services/api";
 
 const MenuSection = () => {
-  const { categories, dishes } = useData();
+  const { categories, dishes, selectedLocation } = useData();
   const { addItem } = useCart();
   const [addonDish, setAddonDish] = useState<Dish | null>(null);
 
@@ -18,6 +18,17 @@ const MenuSection = () => {
     } else {
       addItem(dish);
     }
+  };
+
+  const isDishVisible = (dish: Dish) => {
+    if (!dish.active) return false;
+    if (selectedLocation === "all") return true;
+    return dish.locationIds.includes(selectedLocation);
+  };
+
+  const isDishOnStop = (dish: Dish) => {
+    if (selectedLocation === "all") return false;
+    return dish.stopLocationIds.includes(selectedLocation);
   };
 
   const sortedCategories = [...categories].filter((c) => c.active).sort((a, b) => a.order - b.order);
@@ -36,12 +47,13 @@ const MenuSection = () => {
         <div className="space-y-16">
           {sortedCategories.map((category) => {
             const categoryDishes = dishes.filter((d) => d.categoryId === category.id);
-            if (categoryDishes.length === 0) return null;
+            const visibleDishes = categoryDishes.filter(isDishVisible);
+            if (visibleDishes.length === 0) return null;
             return (
               <div key={category.id}>
                 <h3 className="text-3xl font-display text-primary mb-8 text-center">{category.title}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                  {categoryDishes.map((dish) => (
+                  {visibleDishes.map((dish) => (
                     <div
                       key={dish.id}
                       className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-all duration-300 hover:-translate-y-1"
@@ -60,14 +72,24 @@ const MenuSection = () => {
                           <span className="text-lg font-bold text-primary font-body whitespace-nowrap ml-2">{dish.price} тг</span>
                         </div>
                         <p className="text-muted-foreground text-sm font-body mb-3">{dish.desc}</p>
-                        <Button
-                          onClick={() => handleAdd(dish)}
-                          size="sm"
-                          className="w-full rounded-full font-body font-semibold gap-1"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Добавить
-                        </Button>
+                        {isDishOnStop(dish) ? (
+                          <Button
+                            size="sm"
+                            disabled
+                            className="w-full rounded-full font-body font-semibold gap-1 bg-destructive text-destructive-foreground opacity-90 cursor-not-allowed"
+                          >
+                            СТОП
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleAdd(dish)}
+                            size="sm"
+                            className="w-full rounded-full font-body font-semibold gap-1"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Добавить
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -3,8 +3,9 @@ import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ChefHat, Package, LogOut } from "lucide-react";
+import { ArrowLeft, Check, ChefHat, Package, LogOut, Ban } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import StopListSheet from "@/components/StopListSheet";
 
 const Kitchen = () => {
   const { orders, updateOrderStatus, staff } = useData();
@@ -18,6 +19,8 @@ const Kitchen = () => {
   const readyOrders = orders.filter((o) => o.status === "ready");
 
   const [pickCookForOrder, setPickCookForOrder] = useState<string | null>(null);
+  const [stopListOpen, setStopListOpen] = useState(false);
+  const userLocationId = user?.locationId ? String(user.locationId) : "";
 
   const acceptOrder = (cookId: string) => {
     if (!pickCookForOrder) return;
@@ -40,6 +43,9 @@ const Kitchen = () => {
         <h1 className="text-2xl font-display text-foreground">Кухня</h1>
         <div className="ml-auto flex items-center gap-3">
           {user && <span className="text-sm text-muted-foreground font-body">{user.name}</span>}
+          <Button variant="outline" size="sm" className="rounded-full font-body gap-1 border-destructive/50 text-destructive hover:bg-destructive/10" onClick={() => setStopListOpen(true)}>
+            <Ban className="h-4 w-4" />Стоп-лист
+          </Button>
           <button onClick={handleLogout} className="text-destructive hover:text-destructive/80"><LogOut className="h-4 w-4" /></button>
         </div>
       </div>
@@ -146,6 +152,8 @@ const Kitchen = () => {
           </div>
         </div>
       </div>
+
+      <StopListSheet open={stopListOpen} onClose={() => setStopListOpen(false)} locationId={userLocationId} />
 
       {/* Cook selection modal */}
       <Dialog open={!!pickCookForOrder} onOpenChange={(v) => !v && setPickCookForOrder(null)}>

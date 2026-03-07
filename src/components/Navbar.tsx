@@ -4,12 +4,10 @@ import { useCart } from "@/contexts/CartContext";
 import { useData } from "@/contexts/DataContext";
 import { Link } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 
 const Navbar = () => {
   const { itemCount, setIsOpen } = useCart();
-  const { locations } = useData();
-  const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  const { locations, selectedLocation, setSelectedLocation } = useData();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50">

@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, ChefHat, CheckCircle, Package, LogOut } from "lucide-react";
+import { ArrowLeft, Send, ChefHat, CheckCircle, Package, LogOut, Ban } from "lucide-react";
 import type { OrderStatus, Order } from "@/types";
+import StopListSheet from "@/components/StopListSheet";
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
   new: { label: "Новый", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: Package },
@@ -19,6 +21,8 @@ const Reception = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => { logout(); navigate("/"); };
+  const [stopListOpen, setStopListOpen] = useState(false);
+  const userLocationId = user?.locationId ? String(user.locationId) : "";
 
   const ordersByStatus = (status: OrderStatus): Order[] =>
     orders.filter((o) => o.status === status).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -32,6 +36,9 @@ const Reception = () => {
         <h1 className="text-2xl font-display text-foreground">Рецепшн — Заказы</h1>
         <div className="ml-auto flex items-center gap-3">
           {user && <span className="text-sm text-muted-foreground font-body">{user.name}</span>}
+          <Button variant="outline" size="sm" className="rounded-full font-body gap-1 border-destructive/50 text-destructive hover:bg-destructive/10" onClick={() => setStopListOpen(true)}>
+            <Ban className="h-4 w-4" />Стоп-лист
+          </Button>
           <button onClick={handleLogout} className="text-destructive hover:text-destructive/80"><LogOut className="h-4 w-4" /></button>
         </div>
       </div>
@@ -89,6 +96,8 @@ const Reception = () => {
           );
         })}
       </div>
+
+      <StopListSheet open={stopListOpen} onClose={() => setStopListOpen(false)} locationId={userLocationId} />
     </div>
   );
 };

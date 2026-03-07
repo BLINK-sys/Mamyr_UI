@@ -3,9 +3,10 @@ import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/services/api";
 import type { Dish, Addon } from "@/types";
@@ -26,6 +27,7 @@ const AdminDishes = () => {
   const [imagePreview, setImagePreview] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageMode, setImageMode] = useState<"file" | "url">("file");
+  const [active, setActive] = useState(true);
   const [categoryId, setCategoryId] = useState("");
   const [locationIds, setLocationIds] = useState<string[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
@@ -37,7 +39,7 @@ const AdminDishes = () => {
   const reset = () => {
     setName(""); setDesc(""); setIngredients(""); setPrice(0); setWeight("");
     setImage(""); setImageUrl(""); setImagePreview(""); setImageFile(null); setImageMode("file");
-    setCategoryId(""); setLocationIds([]); setAddons([]);
+    setActive(true); setCategoryId(""); setLocationIds([]); setAddons([]);
   };
 
   const openNew = () => { setEditing(null); reset(); setCategoryId(categories[0]?.id || ""); setOpen(true); };
@@ -45,7 +47,7 @@ const AdminDishes = () => {
     setEditing(d); setName(d.name); setDesc(d.desc); setIngredients(d.ingredients); setPrice(d.price);
     setWeight(d.weight); setImage(d.image); setImageUrl(""); setImageFile(null); setImageMode("file");
     setImagePreview(d.image ? api.fullImageUrl(d.image) : "");
-    setCategoryId(d.categoryId); setLocationIds(d.locationIds); setAddons(d.addons);
+    setActive(d.active); setCategoryId(d.categoryId); setLocationIds(d.locationIds); setAddons(d.addons);
     setOpen(true);
   };
 
@@ -106,6 +108,7 @@ const AdminDishes = () => {
       const body = {
         name, desc, ingredients, price, weight,
         image: image || "",
+        active,
         categoryId: Number(categoryId),
         locationIds: locationIds.map(Number),
         addons: addons.map((a) => ({ name: a.name, price: a.price })),
@@ -194,7 +197,11 @@ const AdminDishes = () => {
               <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs font-body">нет</div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-body font-semibold text-foreground truncate">{dish.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-body font-semibold text-foreground truncate">{dish.name}</p>
+                {!dish.active && <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-body shrink-0">неактивно</span>}
+                {dish.stopLocationIds.length > 0 && <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full font-body shrink-0">стоп</span>}
+              </div>
               <p className="text-xs text-muted-foreground font-body">{getCategoryName(dish.categoryId)} · {dish.price} тг · {dish.weight}</p>
             </div>
             <div className="flex gap-2">
@@ -288,8 +295,15 @@ const AdminDishes = () => {
               </div>
             </div>
 
-            {/* Right column: category, locations, addons */}
+            {/* Right column: active, category, locations, addons */}
             <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                  <span className="text-sm font-body font-semibold">{active ? "Активно" : "Скрыто"}</span>
+                </div>
+                <Switch checked={active} onCheckedChange={setActive} />
+              </div>
               <div>
                 <p className="text-sm font-body font-semibold mb-2">Категория</p>
                 <Select value={categoryId} onValueChange={setCategoryId}>
