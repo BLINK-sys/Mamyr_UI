@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, X, Link } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,6 +76,29 @@ const AdminDishes = () => {
     setImageUrl("");
     if (fileRef.current) fileRef.current.value = "";
   };
+
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    if (!open) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+        setImageUrl("");
+        setImageMode("file");
+        return;
+      }
+    }
+  }, [open]);
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   const save = async () => {
     setSaving(true);
@@ -234,16 +257,22 @@ const AdminDishes = () => {
               </div>
 
               {imageMode === "file" ? (
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="block w-full text-sm text-muted-foreground font-body
-                    file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
-                    file:text-sm file:font-semibold file:bg-primary/10 file:text-primary
-                    hover:file:bg-primary/20 file:cursor-pointer cursor-pointer"
-                />
+                <div className="space-y-2">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="block w-full text-sm text-muted-foreground font-body
+                      file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
+                      file:text-sm file:font-semibold file:bg-primary/10 file:text-primary
+                      hover:file:bg-primary/20 file:cursor-pointer cursor-pointer"
+                  />
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
+                    <ClipboardPaste className="h-3.5 w-3.5" />
+                    <span>Или вставьте скриншот из буфера (Ctrl+V)</span>
+                  </div>
+                </div>
               ) : (
                 <Input
                   placeholder="https://example.com/image.jpg"
