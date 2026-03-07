@@ -63,7 +63,7 @@ const CartDrawer = () => {
             <div className="flex-1 overflow-y-auto space-y-3 py-4">
               {items.map((item, idx) => (
                 <div key={item.dish.id + idx} className="flex gap-3 p-3 bg-card rounded-xl">
-                  <img src={item.dish.image} alt={item.dish.name} className="w-16 h-16 rounded-lg object-cover" />
+                  <img src={api.fullImageUrl(item.dish.image)} alt={item.dish.name} className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-display text-sm truncate">{item.dish.name}</h4>
                     {item.selectedAddons.length > 0 && (

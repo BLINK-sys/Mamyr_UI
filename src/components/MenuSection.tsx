@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useData } from "@/contexts/DataContext";
 import AddonsModal from "@/components/AddonsModal";
 import type { Dish } from "@/types";
+import { api } from "@/services/api";
 
 const MenuSection = () => {
   const { categories, dishes } = useData();
@@ -46,7 +47,7 @@ const MenuSection = () => {
                       className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-all duration-300 hover:-translate-y-1"
                     >
                       <div className="relative overflow-hidden h-48">
-                        <img src={dish.image} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={api.fullImageUrl(dish.image)} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         {dish.weight && (
                           <span className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-foreground text-xs font-body px-2 py-1 rounded-full">
                             {dish.weight}
