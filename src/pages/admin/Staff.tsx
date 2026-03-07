@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { api } from "@/services/api";
 import type { Staff, StaffRole } from "@/types";
 
 const roleLabels: Record<StaffRole, string> = {
@@ -15,7 +16,7 @@ const roleLabels: Record<StaffRole, string> = {
 };
 
 const AdminStaff = () => {
-  const { staff, setStaff, locations } = useData();
+  const { staff, locations, refreshData } = useData();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Staff | null>(null);
   const [name, setName] = useState("");
@@ -30,18 +31,27 @@ const AdminStaff = () => {
     : staff.filter((s) => s.locationId === selectedLocation);
 
   const openNew = () => { setEditing(null); setName(""); setEmail(""); setPassword(""); setRole("cook"); setLocationId(locations[0]?.id || ""); setOpen(true); };
-  const openEdit = (s: Staff) => { setEditing(s); setName(s.name); setEmail(s.email); setPassword(s.password); setRole(s.role); setLocationId(s.locationId); setOpen(true); };
+  const openEdit = (s: Staff) => { setEditing(s); setName(s.name); setEmail(s.email); setPassword(""); setRole(s.role); setLocationId(s.locationId); setOpen(true); };
 
-  const save = () => {
-    if (editing) {
-      setStaff((prev) => prev.map((s) => s.id === editing.id ? { ...s, name, email, password, role, locationId } : s));
-    } else {
-      setStaff((prev) => [...prev, { id: "s" + Date.now(), name, email, password, role, locationId }]);
-    }
+  const save = async () => {
+    const body = { name, email, password, role, locationId: Number(locationId) };
+    try {
+      if (editing) {
+        await api.put(`/staff/${Number(editing.id)}`, body);
+      } else {
+        await api.post("/staff", body);
+      }
+      await refreshData();
+    } catch (e) { console.error("Failed to save staff", e); }
     setOpen(false);
   };
 
-  const remove = (id: string) => setStaff((prev) => prev.filter((s) => s.id !== id));
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`/staff/${Number(id)}`);
+      await refreshData();
+    } catch (e) { console.error("Failed to delete staff", e); }
+  };
 
   const getLocationName = (id: string) => locations.find((l) => l.id === id)?.name || "—";
 

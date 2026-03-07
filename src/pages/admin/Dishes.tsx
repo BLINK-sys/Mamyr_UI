@@ -7,10 +7,11 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { api } from "@/services/api";
 import type { Dish, Addon } from "@/types";
 
 const AdminDishes = () => {
-  const { dishes, setDishes, categories, locations } = useData();
+  const { dishes, categories, locations, refreshData } = useData();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Dish | null>(null);
   const [selectedCat, setSelectedCat] = useState<string>("all");
@@ -50,17 +51,31 @@ const AdminDishes = () => {
 
   const removeAddon = (id: string) => setAddons((prev) => prev.filter((a) => a.id !== id));
 
-  const save = () => {
-    const dish: Dish = { id: editing?.id || "d" + Date.now(), name, desc, ingredients, price, weight, image: image || editing?.image || "", categoryId, locationIds, addons };
-    if (editing) {
-      setDishes((prev) => prev.map((d) => d.id === editing.id ? dish : d));
-    } else {
-      setDishes((prev) => [...prev, dish]);
-    }
+  const save = async () => {
+    const body = {
+      name, desc, ingredients, price, weight,
+      image: image || editing?.image || "",
+      categoryId: Number(categoryId),
+      locationIds: locationIds.map(Number),
+      addons: addons.map((a) => ({ name: a.name, price: a.price })),
+    };
+    try {
+      if (editing) {
+        await api.put(`/dishes/${Number(editing.id)}`, body);
+      } else {
+        await api.post("/dishes", body);
+      }
+      await refreshData();
+    } catch (e) { console.error("Failed to save dish", e); }
     setOpen(false);
   };
 
-  const remove = (id: string) => setDishes((prev) => prev.filter((d) => d.id !== id));
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`/dishes/${Number(id)}`);
+      await refreshData();
+    } catch (e) { console.error("Failed to delete dish", e); }
+  };
 
   const getCategoryName = (id: string) => categories.find((c) => c.id === id)?.title || "—";
 

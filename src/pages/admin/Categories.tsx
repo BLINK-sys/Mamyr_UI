@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Pencil, GripVertical } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { api } from "@/services/api";
 import type { Category } from "@/types";
 
 const AdminCategories = () => {
-  const { categories, setCategories } = useData();
+  const { categories, setCategories, refreshData } = useData();
   const [editing, setEditing] = useState<Category | null>(null);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -19,20 +20,33 @@ const AdminCategories = () => {
   const openNew = () => { setEditing(null); setTitle(""); setOpen(true); };
   const openEdit = (c: Category) => { setEditing(c); setTitle(c.title); setOpen(true); };
 
-  const save = () => {
-    if (editing) {
-      setCategories((prev) => prev.map((c) => c.id === editing.id ? { ...c, title } : c));
-    } else {
-      const maxOrder = categories.reduce((m, c) => Math.max(m, c.order), 0);
-      setCategories((prev) => [...prev, { id: "cat" + Date.now(), title, order: maxOrder + 1, active: true }]);
-    }
+  const save = async () => {
+    try {
+      if (editing) {
+        await api.put(`/categories/${Number(editing.id)}`, { title, order: editing.order, active: editing.active });
+      } else {
+        const maxOrder = categories.reduce((m, c) => Math.max(m, c.order), 0);
+        await api.post("/categories", { title, order: maxOrder + 1, active: true });
+      }
+      await refreshData();
+    } catch (e) { console.error("Failed to save category", e); }
     setOpen(false);
   };
 
-  const remove = (id: string) => setCategories((prev) => prev.filter((c) => c.id !== id));
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`/categories/${Number(id)}`);
+      await refreshData();
+    } catch (e) { console.error("Failed to delete category", e); }
+  };
 
-  const toggleActive = (id: string) => {
-    setCategories((prev) => prev.map((c) => c.id === id ? { ...c, active: !c.active } : c));
+  const toggleActive = async (id: string) => {
+    const cat = categories.find((c) => c.id === id);
+    if (!cat) return;
+    try {
+      await api.put(`/categories/${Number(id)}`, { title: cat.title, order: cat.order, active: !cat.active });
+      await refreshData();
+    } catch (e) { console.error("Failed to toggle category", e); }
   };
 
   const handleDragStart = (idx: number) => setDragIdx(idx);
@@ -48,7 +62,12 @@ const AdminCategories = () => {
     setDragIdx(targetIdx);
   }, [dragIdx, sorted, setCategories]);
 
-  const handleDragEnd = () => setDragIdx(null);
+  const handleDragEnd = async () => {
+    setDragIdx(null);
+    try {
+      await Promise.all(sorted.map((c) => api.put(`/categories/${Number(c.id)}`, { title: c.title, order: c.order, active: c.active })));
+    } catch (e) { console.error("Failed to reorder categories", e); }
+  };
 
   return (
     <div>

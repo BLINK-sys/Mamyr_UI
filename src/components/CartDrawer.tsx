@@ -6,34 +6,42 @@ import { useData } from "@/contexts/DataContext";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
 
 const CartDrawer = () => {
   const { items, updateQuantity, removeItem, clearCart, total, isOpen, setIsOpen } = useCart();
-  const { setOrders } = useData();
+  const { refreshData } = useData();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (!name.trim() || !phone.trim()) {
       toast({ title: "Заполните имя и телефон", variant: "destructive" });
       return;
     }
-    const order = {
-      id: "ord" + Date.now(),
-      items: items.map((i) => ({ dish: i.dish, quantity: i.quantity, addons: i.selectedAddons })),
-      total,
-      status: "new" as const,
-      createdAt: new Date().toISOString(),
-      customerName: name,
-      customerPhone: phone,
-    };
-    setOrders((prev) => [order, ...prev]);
-    clearCart();
-    setName("");
-    setPhone("");
-    setIsOpen(false);
-    toast({ title: "Заказ оформлен!", description: "Мы скоро свяжемся с вами" });
+    try {
+      await api.post("/orders", {
+        customerName: name,
+        customerPhone: phone,
+        total,
+        items: items.map((i) => ({
+          dishId: Number(i.dish.id),
+          dishName: i.dish.name,
+          dishPrice: i.dish.price,
+          quantity: i.quantity,
+          addons: i.selectedAddons.map((a) => ({ name: a.name, price: a.price })),
+        })),
+      });
+      await refreshData();
+      clearCart();
+      setName("");
+      setPhone("");
+      setIsOpen(false);
+      toast({ title: "Заказ оформлен!", description: "Мы скоро свяжемся с вами" });
+    } catch (e) {
+      toast({ title: "Ошибка при оформлении заказа", variant: "destructive" });
+    }
   };
 
   return (

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { api } from "@/services/api";
 import type { Location } from "@/types";
 
 const AdminLocations = () => {
-  const { locations, setLocations } = useData();
+  const { locations, refreshData } = useData();
   const [editing, setEditing] = useState<Location | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -16,16 +17,24 @@ const AdminLocations = () => {
   const openNew = () => { setEditing(null); setName(""); setAddress(""); setOpen(true); };
   const openEdit = (loc: Location) => { setEditing(loc); setName(loc.name); setAddress(loc.address); setOpen(true); };
 
-  const save = () => {
-    if (editing) {
-      setLocations((prev) => prev.map((l) => l.id === editing.id ? { ...l, name, address } : l));
-    } else {
-      setLocations((prev) => [...prev, { id: "loc" + Date.now(), name, address }]);
-    }
+  const save = async () => {
+    try {
+      if (editing) {
+        await api.put(`/locations/${Number(editing.id)}`, { name, address });
+      } else {
+        await api.post("/locations", { name, address });
+      }
+      await refreshData();
+    } catch (e) { console.error("Failed to save location", e); }
     setOpen(false);
   };
 
-  const remove = (id: string) => setLocations((prev) => prev.filter((l) => l.id !== id));
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`/locations/${Number(id)}`);
+      await refreshData();
+    } catch (e) { console.error("Failed to delete location", e); }
+  };
 
   return (
     <div>

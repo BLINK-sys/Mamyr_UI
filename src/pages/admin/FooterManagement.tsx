@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Plus, Save, X, icons, GripVertical, Palette } from "lucide-react";
-import type { FooterContact, FooterSchedule } from "@/types";
+import { api } from "@/services/api";
+import type { FooterContact, FooterSchedule, FooterSettings } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const availableIcons = ["Phone", "Mail", "MapPin", "Globe", "Instagram", "MessageCircle", "Clock", "Star", "Heart", "ExternalLink"] as const;
@@ -86,8 +87,18 @@ const SchedulePreview = ({ schedule }: { schedule: FooterSchedule[] }) => (
   </div>
 );
 
+const syncFooterToApi = async (settings: FooterSettings) => {
+  try {
+    await api.put("/footer", {
+      description: settings.description,
+      contacts: settings.contacts.map((c) => ({ icon: c.icon, text: c.text, order: c.order, iconColor: c.iconColor || null, textColor: c.textColor || null })),
+      schedule: settings.schedule.map((s) => ({ text: s.text, order: s.order, textColor: s.textColor || null })),
+    });
+  } catch (e) { console.error("Failed to sync footer", e); }
+};
+
 const FooterManagement = () => {
-  const { footerSettings, setFooterSettings } = useData();
+  const { footerSettings, setFooterSettings, refreshData } = useData();
   const [description, setDescription] = useState(footerSettings.description);
   const [descEditing, setDescEditing] = useState(false);
 
@@ -103,9 +114,12 @@ const FooterManagement = () => {
   const [dragContact, setDragContact] = useState<number | null>(null);
   const [dragSchedule, setDragSchedule] = useState<number | null>(null);
 
-  const saveDescription = () => {
-    setFooterSettings((prev) => ({ ...prev, description }));
+  const saveDescription = async () => {
+    const updated = { ...footerSettings, description };
+    setFooterSettings(updated);
     setDescEditing(false);
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
   // Contact CRUD
@@ -116,19 +130,25 @@ const FooterManagement = () => {
     setContactForm({ icon: c.icon, text: c.text, iconColor: c.iconColor || "", textColor: c.textColor || "" });
   };
 
-  const saveContact = (id: string) => {
-    setFooterSettings((prev) => ({
-      ...prev,
-      contacts: prev.contacts.map((c) => (c.id === id ? { ...c, icon: contactForm.icon, text: contactForm.text, iconColor: contactForm.iconColor || undefined, textColor: contactForm.textColor || undefined } : c)),
-    }));
+  const saveContact = async (id: string) => {
+    const updated = {
+      ...footerSettings,
+      contacts: footerSettings.contacts.map((c) => (c.id === id ? { ...c, icon: contactForm.icon, text: contactForm.text, iconColor: contactForm.iconColor || undefined, textColor: contactForm.textColor || undefined } : c)),
+    };
+    setFooterSettings(updated);
     setEditingContact(null);
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
-  const deleteContact = (id: string) => {
-    setFooterSettings((prev) => ({ ...prev, contacts: prev.contacts.filter((c) => c.id !== id) }));
+  const deleteContact = async (id: string) => {
+    const updated = { ...footerSettings, contacts: footerSettings.contacts.filter((c) => c.id !== id) };
+    setFooterSettings(updated);
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
-  const addContact = () => {
+  const addContact = async () => {
     const maxOrder = footerSettings.contacts.reduce((m, c) => Math.max(m, c.order), 0);
     const newContact: FooterContact = {
       id: `fc-${Date.now()}`,
@@ -138,9 +158,12 @@ const FooterManagement = () => {
       iconColor: contactForm.iconColor || undefined,
       textColor: contactForm.textColor || undefined,
     };
-    setFooterSettings((prev) => ({ ...prev, contacts: [...prev.contacts, newContact] }));
+    const updated = { ...footerSettings, contacts: [...footerSettings.contacts, newContact] };
+    setFooterSettings(updated);
     setAddingContact(false);
     setContactForm({ icon: "Phone", text: "", iconColor: "", textColor: "" });
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
   const handleContactDragOver = (e: React.DragEvent, targetIdx: number) => {
@@ -149,9 +172,14 @@ const FooterManagement = () => {
     const reordered = [...sortedContacts];
     const [moved] = reordered.splice(dragContact, 1);
     reordered.splice(targetIdx, 0, moved);
-    const updated = reordered.map((c, i) => ({ ...c, order: i + 1 }));
-    setFooterSettings((prev) => ({ ...prev, contacts: updated }));
+    const updatedContacts = reordered.map((c, i) => ({ ...c, order: i + 1 }));
+    setFooterSettings((prev) => ({ ...prev, contacts: updatedContacts }));
     setDragContact(targetIdx);
+  };
+
+  const handleContactDragEnd = async () => {
+    setDragContact(null);
+    await syncFooterToApi(footerSettings);
   };
 
   // Schedule CRUD
@@ -163,19 +191,25 @@ const FooterManagement = () => {
     setScheduleColor(s.textColor || "");
   };
 
-  const saveSchedule = (id: string) => {
-    setFooterSettings((prev) => ({
-      ...prev,
-      schedule: prev.schedule.map((s) => (s.id === id ? { ...s, text: scheduleForm, textColor: scheduleColor || undefined } : s)),
-    }));
+  const saveSchedule = async (id: string) => {
+    const updated = {
+      ...footerSettings,
+      schedule: footerSettings.schedule.map((s) => (s.id === id ? { ...s, text: scheduleForm, textColor: scheduleColor || undefined } : s)),
+    };
+    setFooterSettings(updated);
     setEditingSchedule(null);
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
-  const deleteSchedule = (id: string) => {
-    setFooterSettings((prev) => ({ ...prev, schedule: prev.schedule.filter((s) => s.id !== id) }));
+  const deleteSchedule = async (id: string) => {
+    const updated = { ...footerSettings, schedule: footerSettings.schedule.filter((s) => s.id !== id) };
+    setFooterSettings(updated);
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
-  const addSchedule = () => {
+  const addSchedule = async () => {
     const maxOrder = footerSettings.schedule.reduce((m, s) => Math.max(m, s.order), 0);
     const newSchedule: FooterSchedule = {
       id: `fs-${Date.now()}`,
@@ -183,10 +217,13 @@ const FooterManagement = () => {
       order: maxOrder + 1,
       textColor: scheduleColor || undefined,
     };
-    setFooterSettings((prev) => ({ ...prev, schedule: [...prev.schedule, newSchedule] }));
+    const updated = { ...footerSettings, schedule: [...footerSettings.schedule, newSchedule] };
+    setFooterSettings(updated);
     setAddingSchedule(false);
     setScheduleForm("");
     setScheduleColor("");
+    await syncFooterToApi(updated);
+    await refreshData();
   };
 
   const handleScheduleDragOver = (e: React.DragEvent, targetIdx: number) => {
@@ -195,9 +232,14 @@ const FooterManagement = () => {
     const reordered = [...sortedSchedule];
     const [moved] = reordered.splice(dragSchedule, 1);
     reordered.splice(targetIdx, 0, moved);
-    const updated = reordered.map((s, i) => ({ ...s, order: i + 1 }));
-    setFooterSettings((prev) => ({ ...prev, schedule: updated }));
+    const updatedSchedule = reordered.map((s, i) => ({ ...s, order: i + 1 }));
+    setFooterSettings((prev) => ({ ...prev, schedule: updatedSchedule }));
     setDragSchedule(targetIdx);
+  };
+
+  const handleScheduleDragEnd = async () => {
+    setDragSchedule(null);
+    await syncFooterToApi(footerSettings);
   };
 
   return (
@@ -250,7 +292,7 @@ const FooterManagement = () => {
                 draggable={editingContact !== c.id}
                 onDragStart={() => setDragContact(idx)}
                 onDragOver={(e) => handleContactDragOver(e, idx)}
-                onDragEnd={() => setDragContact(null)}
+                onDragEnd={handleContactDragEnd}
                 className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50 cursor-grab active:cursor-grabbing"
               >
                 {editingContact !== c.id && <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />}
@@ -347,7 +389,7 @@ const FooterManagement = () => {
                 draggable={editingSchedule !== s.id}
                 onDragStart={() => setDragSchedule(idx)}
                 onDragOver={(e) => handleScheduleDragOver(e, idx)}
-                onDragEnd={() => setDragSchedule(null)}
+                onDragEnd={handleScheduleDragEnd}
                 className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50 cursor-grab active:cursor-grabbing"
               >
                 {editingSchedule !== s.id && <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />}

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { api } from "@/services/api";
 import type { Banner } from "@/types";
 
 const AdminBanners = () => {
-  const { banners, setBanners } = useData();
+  const { banners, refreshData } = useData();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Banner | null>(null);
   const [title, setTitle] = useState("");
@@ -18,16 +19,25 @@ const AdminBanners = () => {
   const openNew = () => { setEditing(null); setTitle(""); setSubtitle(""); setImage(""); setOrder(banners.length + 1); setOpen(true); };
   const openEdit = (b: Banner) => { setEditing(b); setTitle(b.title); setSubtitle(b.subtitle); setImage(b.image); setOrder(b.order); setOpen(true); };
 
-  const save = () => {
-    if (editing) {
-      setBanners((prev) => prev.map((b) => b.id === editing.id ? { ...b, title, subtitle, image: image || b.image, order } : b));
-    } else {
-      setBanners((prev) => [...prev, { id: "b" + Date.now(), title, subtitle, image, order }]);
-    }
+  const save = async () => {
+    const body = { title, subtitle, image: image || editing?.image || "", order };
+    try {
+      if (editing) {
+        await api.put(`/banners/${Number(editing.id)}`, body);
+      } else {
+        await api.post("/banners", body);
+      }
+      await refreshData();
+    } catch (e) { console.error("Failed to save banner", e); }
     setOpen(false);
   };
 
-  const remove = (id: string) => setBanners((prev) => prev.filter((b) => b.id !== id));
+  const remove = async (id: string) => {
+    try {
+      await api.delete(`/banners/${Number(id)}`);
+      await refreshData();
+    } catch (e) { console.error("Failed to delete banner", e); }
+  };
 
   return (
     <div>
