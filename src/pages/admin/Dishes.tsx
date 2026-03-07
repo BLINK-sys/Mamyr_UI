@@ -206,119 +206,125 @@ const AdminDishes = () => {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader><DialogTitle className="font-display">{editing ? "Редактировать блюдо" : "Новое блюдо"}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <Input placeholder="Название" value={name} onChange={(e) => setName(e.target.value)} />
-            <Textarea placeholder="Описание" value={desc} onChange={(e) => setDesc(e.target.value)} />
-            <Textarea placeholder="Состав" value={ingredients} onChange={(e) => setIngredients(e.target.value)} />
-            <div className="grid grid-cols-2 gap-3">
-              <Input type="number" placeholder="Цена" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} />
-              <Input placeholder="Граммовка" value={weight} onChange={(e) => setWeight(e.target.value)} />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column: image, name, description, ingredients, price/weight */}
+            <div className="space-y-4">
+              {/* Image section */}
+              <div>
+                <p className="text-sm font-body font-semibold mb-2">Изображение</p>
 
-            {/* Image section */}
-            <div>
-              <p className="text-sm font-body font-semibold mb-2">Изображение</p>
+                {imagePreview && (
+                  <div className="relative mb-3 inline-block">
+                    <img src={imagePreview} alt="Превью" className="w-full max-w-[200px] h-32 object-cover rounded-lg border border-border" />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={clearImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
 
-              {imagePreview && (
-                <div className="relative mb-3 inline-block">
-                  <img src={imagePreview} alt="Превью" className="w-full max-w-[200px] h-32 object-cover rounded-lg border border-border" />
+                <div className="flex gap-2 mb-2">
                   <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                    onClick={clearImage}
+                    type="button"
+                    variant={imageMode === "file" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageMode("file")}
+                    className="gap-1"
                   >
-                    <X className="h-3 w-3" />
+                    <Upload className="h-3.5 w-3.5" />С компьютера
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={imageMode === "url" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageMode("url")}
+                    className="gap-1"
+                  >
+                    <Link className="h-3.5 w-3.5" />По URL
                   </Button>
                 </div>
-              )}
 
-              <div className="flex gap-2 mb-2">
-                <Button
-                  type="button"
-                  variant={imageMode === "file" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setImageMode("file")}
-                  className="gap-1"
-                >
-                  <Upload className="h-3.5 w-3.5" />С компьютера
-                </Button>
-                <Button
-                  type="button"
-                  variant={imageMode === "url" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setImageMode("url")}
-                  className="gap-1"
-                >
-                  <Link className="h-3.5 w-3.5" />По URL
-                </Button>
-              </div>
-
-              {imageMode === "file" ? (
-                <div className="space-y-2">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="block w-full text-sm text-muted-foreground font-body
-                      file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
-                      file:text-sm file:font-semibold file:bg-primary/10 file:text-primary
-                      hover:file:bg-primary/20 file:cursor-pointer cursor-pointer"
+                {imageMode === "file" ? (
+                  <div className="space-y-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="block w-full text-sm text-muted-foreground font-body
+                        file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
+                        file:text-sm file:font-semibold file:bg-primary/10 file:text-primary
+                        hover:file:bg-primary/20 file:cursor-pointer cursor-pointer"
+                    />
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
+                      <ClipboardPaste className="h-3.5 w-3.5" />
+                      <span>Или вставьте скриншот из буфера (Ctrl+V)</span>
+                    </div>
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    value={imageUrl}
+                    onChange={(e) => {
+                      setImageUrl(e.target.value);
+                      if (e.target.value.trim()) setImagePreview(e.target.value);
+                    }}
                   />
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
-                    <ClipboardPaste className="h-3.5 w-3.5" />
-                    <span>Или вставьте скриншот из буфера (Ctrl+V)</span>
-                  </div>
-                </div>
-              ) : (
-                <Input
-                  placeholder="https://example.com/image.jpg"
-                  value={imageUrl}
-                  onChange={(e) => {
-                    setImageUrl(e.target.value);
-                    if (e.target.value.trim()) setImagePreview(e.target.value);
-                  }}
-                />
-              )}
+                )}
+              </div>
+
+              <Input placeholder="Название" value={name} onChange={(e) => setName(e.target.value)} />
+              <Textarea placeholder="Описание" value={desc} onChange={(e) => setDesc(e.target.value)} />
+              <Textarea placeholder="Состав" value={ingredients} onChange={(e) => setIngredients(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <Input type="number" placeholder="Цена" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} />
+                <Input placeholder="Граммовка" value={weight} onChange={(e) => setWeight(e.target.value)} />
+              </div>
             </div>
 
-            <div>
-              <p className="text-sm font-body font-semibold mb-2">Категория</p>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <p className="text-sm font-body font-semibold mb-2">Точки</p>
-              <div className="space-y-2">
-                {locations.map((loc) => (
-                  <label key={loc.id} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox checked={locationIds.includes(loc.id)} onCheckedChange={() => toggleLocation(loc.id)} />
-                    <span className="text-sm font-body">{loc.name}</span>
-                  </label>
-                ))}
+            {/* Right column: category, locations, addons */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-body font-semibold mb-2">Категория</p>
+                <Select value={categoryId} onValueChange={setCategoryId}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div>
-              <p className="text-sm font-body font-semibold mb-2">Добавки</p>
-              <div className="space-y-2 mb-3">
-                {addons.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between p-2 bg-accent/30 rounded-lg">
-                    <span className="text-sm font-body">{a.name} — {a.price} тг</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeAddon(a.id)}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
-                ))}
+              <div>
+                <p className="text-sm font-body font-semibold mb-2">Точки</p>
+                <div className="space-y-2">
+                  {locations.map((loc) => (
+                    <label key={loc.id} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox checked={locationIds.includes(loc.id)} onCheckedChange={() => toggleLocation(loc.id)} />
+                      <span className="text-sm font-body">{loc.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Input placeholder="Название" value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" />
-                <Input type="number" placeholder="Цена" value={newAddonPrice || ""} onChange={(e) => setNewAddonPrice(Number(e.target.value))} className="w-24" />
-                <Button variant="outline" size="sm" onClick={addAddon}>+</Button>
+              <div>
+                <p className="text-sm font-body font-semibold mb-2">Добавки</p>
+                <div className="space-y-2 mb-3">
+                  {addons.map((a) => (
+                    <div key={a.id} className="flex items-center justify-between p-2 bg-accent/30 rounded-lg">
+                      <span className="text-sm font-body">{a.name} — {a.price} тг</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeAddon(a.id)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input placeholder="Название" value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" />
+                  <Input type="number" placeholder="Цена" value={newAddonPrice || ""} onChange={(e) => setNewAddonPrice(Number(e.target.value))} className="w-24" />
+                  <Button variant="outline" size="sm" onClick={addAddon}>+</Button>
+                </div>
               </div>
             </div>
           </div>
