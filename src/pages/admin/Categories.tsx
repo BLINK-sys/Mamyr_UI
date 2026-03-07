@@ -87,7 +87,6 @@ const AdminCategories = () => {
           >
             <div className="flex items-center gap-3">
               <GripVertical className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-body">#{cat.order}</span>
               <p className="font-body font-semibold text-foreground">{cat.title}</p>
             </div>
             <div className="flex items-center gap-3">

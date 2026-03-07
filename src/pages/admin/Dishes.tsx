@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, X, Link } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,20 +22,30 @@ const AdminDishes = () => {
   const [price, setPrice] = useState(0);
   const [weight, setWeight] = useState("");
   const [image, setImage] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageMode, setImageMode] = useState<"file" | "url">("file");
   const [categoryId, setCategoryId] = useState("");
   const [locationIds, setLocationIds] = useState<string[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
   const [newAddonName, setNewAddonName] = useState("");
   const [newAddonPrice, setNewAddonPrice] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
-    setName(""); setDesc(""); setIngredients(""); setPrice(0); setWeight(""); setImage(""); setCategoryId(""); setLocationIds([]); setAddons([]);
+    setName(""); setDesc(""); setIngredients(""); setPrice(0); setWeight("");
+    setImage(""); setImageUrl(""); setImagePreview(""); setImageFile(null); setImageMode("file");
+    setCategoryId(""); setLocationIds([]); setAddons([]);
   };
 
   const openNew = () => { setEditing(null); reset(); setCategoryId(categories[0]?.id || ""); setOpen(true); };
   const openEdit = (d: Dish) => {
     setEditing(d); setName(d.name); setDesc(d.desc); setIngredients(d.ingredients); setPrice(d.price);
-    setWeight(d.weight); setImage(d.image); setCategoryId(d.categoryId); setLocationIds(d.locationIds); setAddons(d.addons);
+    setWeight(d.weight); setImage(d.image); setImageUrl(""); setImageFile(null); setImageMode("file");
+    setImagePreview(d.image ? api.fullImageUrl(d.image) : "");
+    setCategoryId(d.categoryId); setLocationIds(d.locationIds); setAddons(d.addons);
     setOpen(true);
   };
 
@@ -51,27 +61,69 @@ const AdminDishes = () => {
 
   const removeAddon = (id: string) => setAddons((prev) => prev.filter((a) => a.id !== id));
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setImageUrl("");
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setImage("");
+    setImageUrl("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const save = async () => {
-    const body = {
-      name, desc, ingredients, price, weight,
-      image: image || editing?.image || "",
-      categoryId: Number(categoryId),
-      locationIds: locationIds.map(Number),
-      addons: addons.map((a) => ({ name: a.name, price: a.price })),
-    };
+    setSaving(true);
     try {
+      const body = {
+        name, desc, ingredients, price, weight,
+        image: image || "",
+        categoryId: Number(categoryId),
+        locationIds: locationIds.map(Number),
+        addons: addons.map((a) => ({ name: a.name, price: a.price })),
+      };
+
+      let savedDish: any;
       if (editing) {
-        await api.put(`/dishes/${Number(editing.id)}`, body);
+        savedDish = await api.put(`/dishes/${Number(editing.id)}`, body);
       } else {
-        await api.post("/dishes", body);
+        savedDish = await api.post("/dishes", body);
       }
+
+      const dishId = savedDish.id;
+      const catId = Number(categoryId);
+
+      let finalImageUrl = image;
+      if (imageFile) {
+        finalImageUrl = await api.uploadDishImage(imageFile, catId, dishId);
+      } else if (imageUrl.trim() && imageUrl !== image) {
+        finalImageUrl = await api.uploadDishImageUrl(imageUrl, catId, dishId);
+      } else if (!image && !imageFile && !imageUrl.trim() && editing?.image) {
+        await api.deleteDishImage(catId, dishId);
+        finalImageUrl = "";
+      }
+
+      if (finalImageUrl !== body.image) {
+        await api.put(`/dishes/${dishId}`, { ...body, image: finalImageUrl });
+      }
+
       await refreshData();
     } catch (e) { console.error("Failed to save dish", e); }
+    setSaving(false);
     setOpen(false);
   };
 
   const remove = async (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
     try {
+      if (dish?.image && dish.image.includes("/dish-image/")) {
+        await api.deleteDishImage(Number(dish.categoryId), Number(id));
+      }
       await api.delete(`/dishes/${Number(id)}`);
       await refreshData();
     } catch (e) { console.error("Failed to delete dish", e); }
@@ -89,7 +141,6 @@ const AdminDishes = () => {
         <Button onClick={openNew} className="rounded-full font-body gap-1"><Plus className="h-4 w-4" />Добавить</Button>
       </div>
 
-      {/* Category filter cards */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
         <button
           onClick={() => setSelectedCat("all")}
@@ -114,7 +165,11 @@ const AdminDishes = () => {
       <div className="space-y-3">
         {filteredDishes.map((dish) => (
           <div key={dish.id} className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
-            <img src={dish.image} alt={dish.name} className="w-14 h-14 rounded-lg object-cover" />
+            {dish.image ? (
+              <img src={api.fullImageUrl(dish.image)} alt={dish.name} className="w-14 h-14 rounded-lg object-cover" />
+            ) : (
+              <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs font-body">нет</div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-body font-semibold text-foreground truncate">{dish.name}</p>
               <p className="text-xs text-muted-foreground font-body">{getCategoryName(dish.categoryId)} · {dish.price} тг · {dish.weight}</p>
@@ -138,7 +193,69 @@ const AdminDishes = () => {
               <Input type="number" placeholder="Цена" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} />
               <Input placeholder="Граммовка" value={weight} onChange={(e) => setWeight(e.target.value)} />
             </div>
-            <Input placeholder="URL изображения" value={image} onChange={(e) => setImage(e.target.value)} />
+
+            {/* Image section */}
+            <div>
+              <p className="text-sm font-body font-semibold mb-2">Изображение</p>
+
+              {imagePreview && (
+                <div className="relative mb-3 inline-block">
+                  <img src={imagePreview} alt="Превью" className="w-full max-w-[200px] h-32 object-cover rounded-lg border border-border" />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                    onClick={clearImage}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  variant={imageMode === "file" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("file")}
+                  className="gap-1"
+                >
+                  <Upload className="h-3.5 w-3.5" />С компьютера
+                </Button>
+                <Button
+                  type="button"
+                  variant={imageMode === "url" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("url")}
+                  className="gap-1"
+                >
+                  <Link className="h-3.5 w-3.5" />По URL
+                </Button>
+              </div>
+
+              {imageMode === "file" ? (
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="block w-full text-sm text-muted-foreground font-body
+                    file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
+                    file:text-sm file:font-semibold file:bg-primary/10 file:text-primary
+                    hover:file:bg-primary/20 file:cursor-pointer cursor-pointer"
+                />
+              ) : (
+                <Input
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    if (e.target.value.trim()) setImagePreview(e.target.value);
+                  }}
+                />
+              )}
+            </div>
+
             <div>
               <p className="text-sm font-body font-semibold mb-2">Категория</p>
               <Select value={categoryId} onValueChange={setCategoryId}>
@@ -176,7 +293,11 @@ const AdminDishes = () => {
               </div>
             </div>
           </div>
-          <DialogFooter><Button onClick={save} className="rounded-full font-body">Сохранить</Button></DialogFooter>
+          <DialogFooter>
+            <Button onClick={save} disabled={saving} className="rounded-full font-body">
+              {saving ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

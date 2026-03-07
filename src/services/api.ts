@@ -47,6 +47,36 @@ export const api = {
     return data.url;
   },
 
+  async uploadDishImage(file: File, categoryId: number, dishId: number): Promise<string> {
+    const token = getToken();
+    const form = new FormData();
+    form.append("file", file);
+    form.append("category_id", String(categoryId));
+    form.append("dish_id", String(dishId));
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/upload/dish-image`, { method: "POST", body: form, headers });
+    const data = await res.json();
+    return data.url;
+  },
+
+  async uploadDishImageUrl(url: string, categoryId: number, dishId: number): Promise<string> {
+    const token = getToken();
+    const form = new FormData();
+    form.append("url", url);
+    form.append("category_id", String(categoryId));
+    form.append("dish_id", String(dishId));
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/upload/dish-image-url`, { method: "POST", body: form, headers });
+    const data = await res.json();
+    return data.url;
+  },
+
+  async deleteDishImage(categoryId: number, dishId: number): Promise<void> {
+    await request(`/upload/dish-image/${categoryId}/${dishId}`, { method: "DELETE" });
+  },
+
   fullImageUrl(path: string | undefined): string {
     if (!path) return "";
     if (path.startsWith("http")) return path;
