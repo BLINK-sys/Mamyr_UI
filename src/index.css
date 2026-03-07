@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 160 30% 12%;
+    --foreground: 45 30% 90%;
+
+    --card: 160 25% 16%;
+    --card-foreground: 45 30% 90%;
+
+    --popover: 160 30% 12%;
+    --popover-foreground: 45 30% 90%;
+
+    --primary: 42 70% 55%;
+    --primary-foreground: 160 30% 10%;
+
+    --secondary: 160 20% 20%;
+    --secondary-foreground: 45 30% 85%;
+
+    --muted: 160 15% 18%;
+    --muted-foreground: 45 10% 55%;
+
+    --accent: 160 20% 22%;
+    --accent-foreground: 42 70% 60%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 160 15% 22%;
+    --input: 160 15% 22%;
+    --ring: 42 70% 55%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 160 30% 10%;
+    --sidebar-foreground: 45 30% 90%;
+    --sidebar-primary: 42 70% 55%;
+    --sidebar-primary-foreground: 160 30% 10%;
+    --sidebar-accent: 160 20% 18%;
+    --sidebar-accent-foreground: 45 30% 90%;
+    --sidebar-border: 160 15% 22%;
+    --sidebar-ring: 42 70% 55%;
+
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Nunito Sans', sans-serif;
+
+    --shadow-warm: 0 4px 20px -4px hsl(42 70% 55% / 0.15);
+    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+}
