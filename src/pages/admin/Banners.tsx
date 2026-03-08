@@ -105,11 +105,11 @@ const createEl = (type: BannerElement["type"]): BannerElement => ({
 });
 
 // ── Element visual in editor preview ────────────────────
-// scale = previewWidth / 1440 — matches vw font sizes in Hero.tsx
-const ElVis = ({ el, scale }: { el: BannerElement; scale: number }) => {
+// Renders at full reference size (1440px); parent canvas is CSS-scaled down
+const ElVis = ({ el }: { el: BannerElement }) => {
   const color = rc(el.color) || undefined;
   const bgColor = rc(el.bgColor) || undefined;
-  const fs = (SIZE_PX[el.size || "base"] ?? 16) * scale;
+  const fs = SIZE_PX[el.size || "base"] ?? 16;
   const ff = el.font === "display" ? "var(--font-display)" : "var(--font-body)";
   const fw = el.weight === "bold" ? 700 : el.weight === "semibold" ? 600 : 400;
 
@@ -253,8 +253,10 @@ const AdminBanners = () => {
     const el = bElements.find((x) => x.id === id);
     if (!el || !previewRef.current) return;
     const rect = previewRef.current.getBoundingClientRect();
-    const ox = e.clientX - rect.left - (el.x / 100) * rect.width;
-    const oy = e.clientY - rect.top - (el.y / 100) * rect.height;
+    const scale = previewWidth / 1440;
+    // offset in canvas coordinates (1440×810)
+    const ox = (e.clientX - rect.left) / scale - (el.x / 100) * 1440;
+    const oy = (e.clientY - rect.top) / scale - (el.y / 100) * 810;
     setDragging({ id, ox, oy });
     setSelectedId(id);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -264,8 +266,9 @@ const AdminBanners = () => {
     if (!dragging || !previewRef.current) return;
     e.preventDefault();
     const rect = previewRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(95, ((e.clientX - rect.left - dragging.ox) / rect.width) * 100));
-    const y = Math.max(0, Math.min(95, ((e.clientY - rect.top - dragging.oy) / rect.height) * 100));
+    const scale = previewWidth / 1440;
+    const x = Math.max(0, Math.min(95, ((e.clientX - rect.left) / scale - dragging.ox) / 1440 * 100));
+    const y = Math.max(0, Math.min(95, ((e.clientY - rect.top) / scale - dragging.oy) / 810 * 100));
     setBElements((prev) => prev.map((el) =>
       el.id === dragging.id ? { ...el, x: parseFloat(x.toFixed(1)), y: parseFloat(y.toFixed(1)) } : el
     ));
@@ -385,37 +388,49 @@ const AdminBanners = () => {
           <div
             ref={previewRef}
             className="relative w-full rounded-xl overflow-hidden border border-border"
-            style={{ aspectRatio: "16/9", background: bImagePreview ? undefined : "hsl(160 30% 12%)" }}
+            style={{ aspectRatio: "16/9", background: "hsl(160 30% 12%)" }}
             onClick={() => setSelectedId(null)}
           >
-            {bImagePreview && (
-              <img src={bImagePreview} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent"
-              style={{ opacity: bOverlayOpacity }} />
+            {/* Inner canvas at reference 1440×810, scaled to fit preview */}
+            <div style={{
+              position: "absolute",
+              width: 1440,
+              height: 810,
+              transformOrigin: "top left",
+              transform: `scale(${previewWidth / 1440})`,
+            }}>
+              {bImagePreview && (
+                <img src={bImagePreview} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              )}
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to right, hsl(160 30% 12%), hsla(160,30%,12%,0.6) 50%, transparent)",
+                opacity: bOverlayOpacity,
+              }} />
 
-            {bElements.map((el) => (
-              <div
-                key={el.id}
-                style={{
-                  position: "absolute",
-                  left: `${el.x}%`,
-                  top: `${el.y}%`,
-                  ...(el.width ? { width: `${el.width}%` } : {}),
-                  cursor: dragging?.id === el.id ? "grabbing" : "grab",
-                  zIndex: selectedId === el.id ? 10 : 1,
-                }}
-                className={`select-none rounded px-1 ${selectedId === el.id
-                  ? "ring-2 ring-primary ring-offset-1 ring-offset-transparent"
-                  : "ring-1 ring-dashed ring-white/30"}`}
-                onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
-                onPointerDown={(e) => startDrag(e, el.id)}
-                onPointerMove={moveDrag}
-                onPointerUp={() => setDragging(null)}
-              >
-                <ElVis el={el} scale={previewWidth / 1440} />
-              </div>
-            ))}
+              {bElements.map((el) => (
+                <div
+                  key={el.id}
+                  style={{
+                    position: "absolute",
+                    left: `${el.x}%`,
+                    top: `${el.y}%`,
+                    ...(el.width ? { width: `${el.width}%` } : {}),
+                    cursor: dragging?.id === el.id ? "grabbing" : "grab",
+                    zIndex: selectedId === el.id ? 10 : 1,
+                  }}
+                  className={`select-none rounded px-1 ${selectedId === el.id
+                    ? "ring-2 ring-primary ring-offset-1 ring-offset-transparent"
+                    : "ring-1 ring-dashed ring-white/30"}`}
+                  onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+                  onPointerDown={(e) => startDrag(e, el.id)}
+                  onPointerMove={moveDrag}
+                  onPointerUp={() => setDragging(null)}
+                >
+                  <ElVis el={el} />
+                </div>
+              ))}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground font-body mt-1.5 text-center">
             Перетащите элементы для позиционирования. Клик на фон — снять выделение.
