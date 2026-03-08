@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/contexts/DataContext";
 import { api } from "@/services/api";
-import { Ban, CheckCircle } from "lucide-react";
+import { Ban, CheckCircle, X } from "lucide-react";
 
 interface StopListSheetProps {
   open: boolean;
@@ -33,11 +33,16 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="left" className="w-full sm:max-w-full flex flex-col p-0">
-        <SheetHeader className="px-6 py-4 border-b border-border">
+        <SheetHeader className="px-6 py-4 border-b border-border flex-row items-center justify-between">
           <SheetTitle className="font-display flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
             Стоп-лист
           </SheetTitle>
+          <SheetClose asChild>
+            <Button variant="destructive" size="sm" className="rounded-full font-body gap-1 px-4">
+              <X className="h-4 w-4" />Закрыть
+            </Button>
+          </SheetClose>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
