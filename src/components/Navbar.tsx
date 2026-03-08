@@ -24,7 +24,6 @@ const Navbar = () => {
                 <SelectValue placeholder="Все точки" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Все точки</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                 ))}

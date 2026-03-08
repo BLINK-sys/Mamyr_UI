@@ -54,7 +54,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         api.get("/orders").catch(() => null),
         api.get("/footer").catch(() => null),
       ]);
-      if (locs) setLocations(locs.map((l: any) => ({ ...l, id: String(l.id) })));
+      if (locs) {
+        const mapped = locs.map((l: any) => ({ ...l, id: String(l.id) }));
+        setLocations(mapped);
+        setSelectedLocation((prev) => prev === "all" && mapped.length > 0 ? mapped[0].id : prev);
+      }
       if (cats) setCategories(cats.map((c: any) => ({ ...c, id: String(c.id) })));
       if (dsh) setDishes(dsh.map((d: any) => ({
         ...d,
