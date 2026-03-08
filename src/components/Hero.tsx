@@ -110,7 +110,7 @@ const Hero = () => {
   const bgSrc = activeBanner?.image ? api.fullImageUrl(activeBanner.image) : (heroImage as string);
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: "90vh" }}>
+    <section className="relative overflow-hidden aspect-[16/9] min-h-[360px]">
       <div className="absolute inset-0">
         <img src={bgSrc} alt="Mamyr КАФЕ" className="w-full h-full object-cover" />
         <div
@@ -124,7 +124,7 @@ const Hero = () => {
           {activeBanner!.elements.map(renderEl)}
         </div>
       ) : (
-        <div className="relative z-10 container mx-auto px-6 py-20 flex items-center" style={{ minHeight: "90vh" }}>
+        <div className="relative z-10 container mx-auto px-6 py-20 flex items-center h-full">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 mb-6 backdrop-blur-sm border border-primary/30">
               <UtensilsCrossed className="h-4 w-4 text-primary" />
