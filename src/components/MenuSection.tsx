@@ -52,11 +52,11 @@ const MenuSection = () => {
             return (
               <div key={category.id}>
                 <h3 className="text-3xl font-display text-primary mb-8 text-center">{category.title}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="flex flex-wrap justify-center gap-5">
                   {visibleDishes.map((dish) => (
                     <div
                       key={dish.id}
-                      className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-all duration-300 hover:-translate-y-1"
+                      className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-all duration-300 hover:-translate-y-1 w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[calc(25%-15px)]"
                     >
                       <div className="relative overflow-hidden h-48">
                         <img src={api.fullImageUrl(dish.image)} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
