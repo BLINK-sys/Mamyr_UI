@@ -64,8 +64,8 @@ const MenuSection = () => {
                       key={dish.id}
                       className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-all duration-300 hover:-translate-y-1 w-full sm:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[calc(25%-15px)] flex flex-col"
                     >
-                      <div className="relative overflow-hidden aspect-[4/3] w-full bg-white">
-                        <img src={api.fullImageUrl(dish.image)} alt={dish.name} className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                      <div className="relative overflow-hidden aspect-[4/3] w-full">
+                        <img src={api.fullImageUrl(dish.image)} alt={dish.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         {dish.weight && (
                           <span className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm text-foreground text-xs font-body px-2 py-1 rounded-full">
                             {dish.weight}
