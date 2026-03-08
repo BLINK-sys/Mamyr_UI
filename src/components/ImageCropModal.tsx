@@ -30,6 +30,9 @@ const createCroppedImage = async (blobSrc: string, px: CroppedAreaPixels): Promi
   canvas.width = px.width;
   canvas.height = px.height;
   const ctx = canvas.getContext("2d")!;
+  const cardColor = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
+  ctx.fillStyle = `hsl(${cardColor})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, px.x, px.y, px.width, px.height, 0, 0, px.width, px.height);
 
   return new Promise((resolve) => {
