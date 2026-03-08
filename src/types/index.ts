@@ -47,6 +47,7 @@ export interface BannerElement {
   font?: "display" | "body";
   weight?: "normal" | "semibold" | "bold";
   variant?: "primary" | "outline";
+  scrollTo?: string;
   x: number;
   y: number;
   width?: number;

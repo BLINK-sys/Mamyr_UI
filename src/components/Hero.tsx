@@ -52,10 +52,10 @@ const renderEl = (el: BannerElement) => {
     case "badge":
       return (
         <div key={el.id} style={s}>
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm"
-            style={{ backgroundColor: bgColor || "hsla(42,70%,55%,0.2)", border: "1px solid hsla(42,70%,55%,0.3)" }}>
-            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: 16, height: 16, color: color || "hsl(var(--primary))" }} />}
-            <span style={{ fontSize: "0.875rem", fontFamily: "var(--font-body)", color: color || "hsl(var(--primary))", fontWeight: 500 }}>{el.content}</span>
+          <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-sm"
+            style={{ backgroundColor: bgColor || "hsla(42,70%,55%,0.2)", border: "1px solid hsla(42,70%,55%,0.3)", padding: `calc(${fontSize} * 0.3) calc(${fontSize} * 0.8)` }}>
+            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: fontSize, height: fontSize, color: color || "hsl(var(--primary))" }} />}
+            <span style={{ fontSize, fontFamily: "var(--font-body)", color: color || "hsl(var(--primary))", fontWeight: 500 }}>{el.content}</span>
           </div>
         </div>
       );
@@ -73,17 +73,25 @@ const renderEl = (el: BannerElement) => {
       );
     case "button": {
       const isPrimary = el.variant !== "outline";
+      const handleClick = el.scrollTo
+        ? () => document.getElementById(el.scrollTo!)?.scrollIntoView({ behavior: "smooth" })
+        : undefined;
       return (
         <div key={el.id} style={s}>
-          <button className="rounded-full font-semibold px-8 py-3" style={{
-            backgroundColor: isPrimary ? (bgColor || "hsl(var(--primary))") : "transparent",
-            color: isPrimary ? (color || "hsl(var(--primary-foreground))") : (color || "hsl(var(--foreground))"),
-            border: !isPrimary ? `2px solid ${color || "hsl(var(--border))"}` : "none",
-            fontFamily: "var(--font-body)",
-            fontSize,
-            cursor: "default",
-          }}>
-            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: 16, height: 16, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+          <button
+            className="rounded-full font-semibold transition-shadow duration-300 hover:shadow-[0_0_28px_hsla(42,70%,55%,0.65)]"
+            style={{
+              backgroundColor: isPrimary ? (bgColor || "hsl(var(--primary))") : "transparent",
+              color: isPrimary ? (color || "hsl(var(--primary-foreground))") : (color || "hsl(var(--foreground))"),
+              border: !isPrimary ? `2px solid ${color || "hsl(var(--border))"}` : "none",
+              fontFamily: "var(--font-body)",
+              fontSize,
+              cursor: el.scrollTo ? "pointer" : "default",
+              padding: `calc(${fontSize} * 0.6) calc(${fontSize} * 1.6)`,
+            }}
+            onClick={handleClick}
+          >
+            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: fontSize, height: fontSize, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
             {el.content}
           </button>
         </div>
@@ -93,8 +101,8 @@ const renderEl = (el: BannerElement) => {
       return (
         <div key={el.id} style={s}>
           <div className="flex items-center gap-2">
-            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: 16, height: 16, color: "hsl(var(--primary))" }} />}
-            <span style={{ fontSize: "0.875rem", fontFamily: "var(--font-body)", color: color || "hsl(var(--muted-foreground))" }}>{el.content}</span>
+            {el.icon && el.icon !== "none" && <DynIcon name={el.icon} style={{ width: fontSize, height: fontSize, color: "hsl(var(--primary))" }} />}
+            <span style={{ fontSize, fontFamily: "var(--font-body)", color: color || "hsl(var(--muted-foreground))" }}>{el.content}</span>
           </div>
         </div>
       );

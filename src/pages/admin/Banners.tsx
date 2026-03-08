@@ -149,7 +149,7 @@ const ElVis = ({ el }: { el: BannerElement }) => {
 
 // ── Main Component ───────────────────────────────────────
 const AdminBanners = () => {
-  const { banners, refreshData } = useData();
+  const { banners, categories, refreshData } = useData();
   const [view, setView] = useState<"list" | "edit">("list");
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -541,6 +541,23 @@ const AdminBanners = () => {
                       Outline
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Scroll target */}
+              {sel.type === "button" && (
+                <div>
+                  <Label className="text-xs font-body">Прокрутить к разделу</Label>
+                  <Select value={sel.scrollTo || "none"} onValueChange={(v) => updateEl({ scrollTo: v === "none" ? undefined : v })}>
+                    <SelectTrigger className="h-8 text-xs mt-1"><SelectValue placeholder="— Без действия —" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Без действия —</SelectItem>
+                      <SelectItem value="menu">Начало меню</SelectItem>
+                      {[...categories].filter((c) => c.active).sort((a, b) => a.order - b.order).map((cat) => (
+                        <SelectItem key={cat.id} value={`cat-${cat.id}`}>{cat.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
