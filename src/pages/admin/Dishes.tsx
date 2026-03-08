@@ -3,8 +3,9 @@ import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste, Eye, EyeOff, Layers } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste, Eye, EyeOff, Layers, Crop } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import ImageCropModal from "@/components/ImageCropModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,6 +39,7 @@ const AdminDishes = () => {
   const [comboMax, setComboMax] = useState(4);
   const [comboItemIds, setComboItemIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -86,9 +88,9 @@ const AdminDishes = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    setCropSrc(URL.createObjectURL(file));
     setImageUrl("");
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const clearImage = () => {
@@ -108,8 +110,7 @@ const AdminDishes = () => {
         e.preventDefault();
         const file = item.getAsFile();
         if (!file) return;
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+        setCropSrc(URL.createObjectURL(file));
         setImageUrl("");
         setImageMode("file");
         return;
@@ -259,6 +260,17 @@ const AdminDishes = () => {
         ))}
       </div>
 
+      <ImageCropModal
+        imageSrc={cropSrc || ""}
+        open={!!cropSrc}
+        onApply={(croppedFile) => {
+          setImageFile(croppedFile);
+          setImagePreview(URL.createObjectURL(croppedFile));
+          setCropSrc(null);
+        }}
+        onCancel={() => setCropSrc(null)}
+      />
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className={`max-h-[90vh] overflow-y-auto ${isCombo ? "sm:max-w-5xl" : "sm:max-w-3xl"}`}>
           <DialogHeader><DialogTitle className="font-display">{editing ? "Редактировать блюдо" : "Новое блюдо"}</DialogTitle></DialogHeader>
@@ -270,7 +282,9 @@ const AdminDishes = () => {
 
                 {imagePreview && (
                   <div className="relative mb-3 inline-block">
-                    <img src={imagePreview} alt="Превью" className="w-full max-w-[200px] h-32 object-cover rounded-lg border border-border" />
+                    <div className="w-[200px] aspect-[4/3] overflow-hidden rounded-lg border border-border">
+                      <img src={imagePreview} alt="Превью" className="w-full h-full object-fill" />
+                    </div>
                     <Button
                       variant="destructive"
                       size="icon"
@@ -279,6 +293,17 @@ const AdminDishes = () => {
                     >
                       <X className="h-3 w-3" />
                     </Button>
+                    {imageFile && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute -top-2 left-0 h-6 w-6 rounded-full border-primary text-primary"
+                        title="Кадрировать"
+                        onClick={() => setCropSrc(imagePreview)}
+                      >
+                        <Crop className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 )}
 
