@@ -59,7 +59,7 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
                         }`}
                         onClick={() => !loading && handleToggle(dish.id)}
                       >
-                        <div className="w-full h-20 overflow-hidden">
+                        <div className="w-full aspect-square overflow-hidden">
                           {dish.image ? (
                             <img
                               src={api.fullImageUrl(dish.image)}
