@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { Location, Category, Dish, Banner, Staff, Order, OrderStatus, FooterSettings } from "@/types";
-import { defaultLocations, defaultCategories, defaultDishes, defaultBanners, defaultStaff, defaultOrders, defaultFooterSettings } from "@/data/mockData";
+import { defaultFooterSettings } from "@/data/mockData";
 import { api } from "@/services/api";
 
 interface DataContextType {
@@ -34,12 +34,12 @@ export const useData = () => {
 };
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locations, setLocations] = useState<Location[]>(defaultLocations);
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
-  const [dishes, setDishes] = useState<Dish[]>(defaultDishes);
-  const [banners, setBanners] = useState<Banner[]>(defaultBanners);
-  const [staff, setStaff] = useState<Staff[]>(defaultStaff);
-  const [orders, setOrders] = useState<Order[]>(defaultOrders);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [footerSettings, setFooterSettings] = useState<FooterSettings>(defaultFooterSettings);
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
