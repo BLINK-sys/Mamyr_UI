@@ -46,20 +46,20 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
             return (
               <div key={cat.id}>
                 <h3 className="font-display text-lg text-foreground mb-3">{cat.title}</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
                   {catDishes.map((dish) => {
                     const onStop = dish.stopLocationIds.includes(locationId);
                     return (
                       <div
                         key={dish.id}
-                        className={`flex flex-col rounded-xl border overflow-hidden transition-colors cursor-pointer ${
+                        className={`flex flex-col rounded-lg border overflow-hidden transition-colors cursor-pointer ${
                           onStop
                             ? "border-destructive/50 bg-destructive/10"
                             : "border-border bg-card"
                         }`}
                         onClick={() => !loading && handleToggle(dish.id)}
                       >
-                        <div className="aspect-square w-full overflow-hidden">
+                        <div className="w-full h-20 overflow-hidden">
                           {dish.image ? (
                             <img
                               src={api.fullImageUrl(dish.image)}
@@ -67,23 +67,23 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-body">нет фото</div>
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-body">нет</div>
                           )}
                         </div>
-                        <div className="p-2 flex flex-col gap-1">
-                          <p className="font-body font-semibold text-foreground text-sm leading-tight line-clamp-2">{dish.name}</p>
+                        <div className="p-1.5 flex flex-col gap-1">
+                          <p className="font-body font-semibold text-foreground text-xs leading-tight line-clamp-2">{dish.name}</p>
                           <p className="text-xs text-muted-foreground font-body">{dish.price} тг</p>
                           <Button
                             size="sm"
                             variant={onStop ? "outline" : "destructive"}
-                            className="w-full rounded-lg font-body gap-1 mt-1 text-xs h-7"
+                            className="w-full rounded-lg font-body gap-1 mt-1 text-xs h-9"
                             disabled={loading === dish.id}
                             onClick={(e) => { e.stopPropagation(); handleToggle(dish.id); }}
                           >
                             {onStop ? (
                               <><CheckCircle className="h-3 w-3" />Снять</>
                             ) : (
-                              <><Ban className="h-3 w-3" />На стоп</>
+                              <><Ban className="h-3 w-3" />Стоп</>
                             )}
                           </Button>
                         </div>
