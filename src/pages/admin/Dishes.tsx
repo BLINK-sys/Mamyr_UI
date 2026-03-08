@@ -293,17 +293,15 @@ const AdminDishes = () => {
                     >
                       <X className="h-3 w-3" />
                     </Button>
-                    {imageFile && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute -top-2 left-0 h-6 w-6 rounded-full border-primary text-primary"
-                        title="Кадрировать"
-                        onClick={() => setCropSrc(imagePreview)}
-                      >
-                        <Crop className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute -top-2 left-0 h-6 w-6 rounded-full border-primary text-primary"
+                      title="Кадрировать"
+                      onClick={() => setCropSrc(imagePreview)}
+                    >
+                      <Crop className="h-3 w-3" />
+                    </Button>
                   </div>
                 )}
 
