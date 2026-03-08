@@ -77,6 +77,18 @@ export const api = {
     await request(`/upload/dish-image/${categoryId}/${dishId}`, { method: "DELETE" });
   },
 
+  async uploadBannerImage(file: File, bannerId: number): Promise<string> {
+    const token = getToken();
+    const form = new FormData();
+    form.append("file", file);
+    form.append("banner_id", String(bannerId));
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/upload/banner-image`, { method: "POST", body: form, headers });
+    const data = await res.json();
+    return data.url;
+  },
+
   fullImageUrl(path: string | undefined): string {
     if (!path) return "";
     if (path.startsWith("http")) return path;

@@ -69,7 +69,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         comboItemIds: (d.comboItemIds || []).map(String),
         addons: d.addons.map((a: any) => ({ ...a, id: String(a.id) })),
       })));
-      if (bans) setBanners(bans.map((b: any) => ({ ...b, id: String(b.id) })));
+      if (bans) setBanners(bans.map((b: any) => ({
+        ...b,
+        id: String(b.id),
+        name: b.name || b.title || "",
+        active: b.active ?? true,
+        overlayOpacity: b.overlay_opacity ?? 0.5,
+        elements: b.elements || [],
+        title: b.title || "",
+        subtitle: b.subtitle || "",
+      })));
       if (stf) setStaff(stf.map((s: any) => ({ ...s, id: String(s.id), locationId: String(s.locationId), password: "" })));
       if (ords) setOrders(ords.map((o: any) => ({
         id: String(o.id),

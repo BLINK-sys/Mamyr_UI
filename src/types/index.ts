@@ -36,12 +36,32 @@ export interface Dish {
   comboItemIds?: string[];
 }
 
+export interface BannerElement {
+  id: string;
+  type: "badge" | "heading" | "text" | "button" | "info";
+  content: string;
+  icon?: string;
+  color?: string;
+  bgColor?: string;
+  size?: string;
+  font?: "display" | "body";
+  weight?: "normal" | "semibold" | "bold";
+  variant?: "primary" | "outline";
+  x: number;
+  y: number;
+  width?: number;
+}
+
 export interface Banner {
   id: string;
+  name: string;
+  active: boolean;
   image: string;
+  overlayOpacity: number;
+  order: number;
+  elements: BannerElement[];
   title: string;
   subtitle: string;
-  order: number;
 }
 
 export type StaffRole = "cook" | "reception" | "admin" | "owner";
