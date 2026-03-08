@@ -31,7 +31,11 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Button size="lg" className="text-lg px-8 py-6 rounded-full shadow-warm font-body font-semibold">
+            <Button
+              size="lg"
+              className="text-lg px-8 py-6 rounded-full shadow-warm font-body font-semibold"
+              onClick={() => document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" })}
+            >
               Смотреть меню
             </Button>
             <Button

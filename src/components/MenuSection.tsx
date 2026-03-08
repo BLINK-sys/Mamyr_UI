@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
@@ -8,9 +8,21 @@ import ComboModal from "@/components/ComboModal";
 import type { Dish } from "@/types";
 import { api } from "@/services/api";
 
+const scrollToCategory = (id: string) => {
+  const el = document.getElementById(`cat-${id}`);
+  if (!el) return;
+  const navbarH = 64;
+  const stickyNavH = 52;
+  const top = el.getBoundingClientRect().top + window.scrollY - navbarH - stickyNavH - 16;
+  window.scrollTo({ top, behavior: "smooth" });
+};
+
 const MenuSection = () => {
   const { categories, dishes, selectedLocation } = useData();
   const { addItem, items } = useCart();
+  const [activeCategory, setActiveCategory] = useState<string>("");
+  const navRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const isInCart = (dishId: string) => items.some((i) => i.dish.id === dishId);
   const [addonDish, setAddonDish] = useState<Dish | null>(null);
@@ -39,8 +51,67 @@ const MenuSection = () => {
 
   const sortedCategories = [...categories].filter((c) => c.active).sort((a, b) => a.order - b.order);
 
+  const visibleCategoryIds = sortedCategories
+    .filter((c) => dishes.filter((d) => d.categoryId === c.id).filter(isDishVisible).length > 0)
+    .map((c) => c.id);
+
+  useEffect(() => {
+    if (visibleCategoryIds.length === 0) return;
+    if (!activeCategory) setActiveCategory(visibleCategoryIds[0]);
+
+    observerRef.current?.disconnect();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          const id = visible[0].target.id.replace("cat-", "");
+          setActiveCategory(id);
+          const btn = navRef.current?.querySelector(`[data-cat="${id}"]`) as HTMLElement | null;
+          btn?.scrollIntoView({ inline: "nearest", block: "nearest" });
+        }
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    visibleCategoryIds.forEach((id) => {
+      const el = document.getElementById(`cat-${id}`);
+      if (el) observer.observe(el);
+    });
+    observerRef.current = observer;
+    return () => observer.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleCategoryIds.join(",")]);
+
   return (
-    <section className="py-16 px-6 bg-background" id="menu">
+    <section className="bg-background" id="menu">
+      {/* Sticky category nav */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        <div
+          ref={navRef}
+          className="container mx-auto px-6 flex gap-2 overflow-x-auto py-3 scrollbar-none"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {sortedCategories
+            .filter((c) => visibleCategoryIds.includes(c.id))
+            .map((c) => (
+              <button
+                key={c.id}
+                data-cat={c.id}
+                onClick={() => scrollToCategory(c.id)}
+                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-body font-semibold transition-colors flex-shrink-0 ${
+                  activeCategory === c.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {c.title}
+              </button>
+            ))}
+        </div>
+      </div>
+
+      <div className="py-16 px-6">
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary font-body">Наше меню</span>
@@ -56,7 +127,7 @@ const MenuSection = () => {
             const visibleDishes = categoryDishes.filter(isDishVisible);
             if (visibleDishes.length === 0) return null;
             return (
-              <div key={category.id}>
+              <div key={category.id} id={`cat-${category.id}`}>
                 <h3 className="text-3xl font-display text-primary mb-8 text-center">{category.title}</h3>
                 <div className="flex flex-wrap justify-center gap-5">
                   {visibleDishes.map((dish) => (
@@ -115,6 +186,7 @@ const MenuSection = () => {
             );
           })}
         </div>
+      </div>
       </div>
 
       <AddonsModal dish={addonDish} open={!!addonDish} onClose={() => setAddonDish(null)} />
