@@ -21,10 +21,11 @@ const COLOR_MAP: Record<string, string> = {
   background: "hsl(var(--background))",
 };
 
+// Font sizes as vw units — scale proportionally with viewport width (ref: 1440px)
 const SIZE_MAP: Record<string, string> = {
-  xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
-  xl: "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem",
-  "5xl": "3rem", "6xl": "3.75rem", "7xl": "4.5rem",
+  xs: "0.83vw", sm: "0.97vw", base: "1.11vw", lg: "1.25vw",
+  xl: "1.39vw", "2xl": "1.67vw", "3xl": "2.08vw", "4xl": "2.5vw",
+  "5xl": "3.33vw", "6xl": "4.17vw", "7xl": "5vw",
 };
 
 const rc = (c?: string) => c ? (COLOR_MAP[c] ?? c) : undefined;
@@ -110,7 +111,7 @@ const Hero = () => {
   const bgSrc = activeBanner?.image ? api.fullImageUrl(activeBanner.image) : (heroImage as string);
 
   return (
-    <section className="relative overflow-hidden aspect-[16/9] min-h-[360px]">
+    <section className="relative overflow-hidden w-full h-screen">
       <div className="absolute inset-0">
         <img src={bgSrc} alt="Mamyr КАФЕ" className="w-full h-full object-cover" />
         <div

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,10 +62,10 @@ const ELEMENT_TYPES = [
   { label: "Иконка + строка", value: "info" },
 ];
 
-// Pixel sizes for the editor preview (scaled down ~40% from actual CSS rem sizes)
-const PREV_PX: Record<string, number> = {
-  xs: 9, sm: 10, base: 12, lg: 13, xl: 14,
-  "2xl": 16, "3xl": 19, "4xl": 23, "5xl": 29, "6xl": 36, "7xl": 44,
+// Reference pixel sizes at 1440px viewport width (matches Hero.tsx vw values)
+const SIZE_PX: Record<string, number> = {
+  xs: 12, sm: 14, base: 16, lg: 18, xl: 20,
+  "2xl": 24, "3xl": 30, "4xl": 36, "5xl": 48, "6xl": 60, "7xl": 72,
 };
 
 const rc = (c?: string): string => {
@@ -105,10 +105,11 @@ const createEl = (type: BannerElement["type"]): BannerElement => ({
 });
 
 // ── Element visual in editor preview ────────────────────
-const ElVis = ({ el }: { el: BannerElement }) => {
+// scale = previewWidth / 1440 — matches vw font sizes in Hero.tsx
+const ElVis = ({ el, scale }: { el: BannerElement; scale: number }) => {
   const color = rc(el.color) || undefined;
   const bgColor = rc(el.bgColor) || undefined;
-  const fs = PREV_PX[el.size || "base"] ?? 12;
+  const fs = (SIZE_PX[el.size || "base"] ?? 16) * scale;
   const ff = el.font === "display" ? "var(--font-display)" : "var(--font-body)";
   const fw = el.weight === "bold" ? 700 : el.weight === "semibold" ? 600 : 400;
 
@@ -162,8 +163,16 @@ const AdminBanners = () => {
   const [bImageFile, setBImageFile] = useState<File | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: string; ox: number; oy: number } | null>(null);
+  const [previewWidth, setPreviewWidth] = useState(640);
   const previewRef = useRef<HTMLDivElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!previewRef.current) return;
+    const ro = new ResizeObserver(([e]) => setPreviewWidth(e.contentRect.width));
+    ro.observe(previewRef.current);
+    return () => ro.disconnect();
+  }, [view]); // re-attach when switching to edit view
 
   const openNew = () => {
     setEditingId(null);
@@ -404,7 +413,7 @@ const AdminBanners = () => {
                 onPointerMove={moveDrag}
                 onPointerUp={() => setDragging(null)}
               >
-                <ElVis el={el} />
+                <ElVis el={el} scale={previewWidth / 1440} />
               </div>
             ))}
           </div>
