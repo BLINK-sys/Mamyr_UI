@@ -32,7 +32,7 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="left" className="w-full sm:max-w-full flex flex-col p-0">
+      <SheetContent side="left" className="w-full sm:max-w-full flex flex-col p-0 [&>button:last-of-type]:hidden">
         <SheetHeader className="px-6 py-4 border-b border-border flex-row items-center justify-between">
           <SheetTitle className="font-display flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
