@@ -144,6 +144,20 @@ const AdminDishes = () => {
     setOpen(false);
   };
 
+  const toggleActive = async (dish: Dish) => {
+    try {
+      await api.put(`/dishes/${Number(dish.id)}`, {
+        name: dish.name, desc: dish.desc, ingredients: dish.ingredients,
+        price: dish.price, weight: dish.weight, image: dish.image,
+        active: !dish.active,
+        categoryId: Number(dish.categoryId),
+        locationIds: dish.locationIds.map(Number),
+        addons: dish.addons.map((a) => ({ name: a.name, price: a.price })),
+      });
+      await refreshData();
+    } catch (e) { console.error("Failed to toggle active", e); }
+  };
+
   const remove = async (id: string) => {
     const dish = dishes.find((d) => d.id === id);
     try {
@@ -204,7 +218,8 @@ const AdminDishes = () => {
               </div>
               <p className="text-xs text-muted-foreground font-body">{getCategoryName(dish.categoryId)} · {dish.price} тг · {dish.weight}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <Switch checked={dish.active} onCheckedChange={() => toggleActive(dish)} />
               <Button variant="ghost" size="icon" onClick={() => openEdit(dish)}><Pencil className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="text-destructive" onClick={() => remove(dish.id)}><Trash2 className="h-4 w-4" /></Button>
             </div>

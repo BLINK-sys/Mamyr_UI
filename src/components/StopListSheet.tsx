@@ -40,50 +40,53 @@ const StopListSheet = ({ open, onClose, locationId }: StopListSheetProps) => {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
           {sortedCategories.map((cat) => {
             const catDishes = locationDishes.filter((d) => d.categoryId === cat.id);
             return (
               <div key={cat.id}>
                 <h3 className="font-display text-lg text-foreground mb-3">{cat.title}</h3>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                   {catDishes.map((dish) => {
                     const onStop = dish.stopLocationIds.includes(locationId);
                     return (
                       <div
                         key={dish.id}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                        className={`flex flex-col rounded-xl border overflow-hidden transition-colors cursor-pointer ${
                           onStop
-                            ? "border-destructive/40 bg-destructive/10"
+                            ? "border-destructive/50 bg-destructive/10"
                             : "border-border bg-card"
                         }`}
+                        onClick={() => !loading && handleToggle(dish.id)}
                       >
-                        {dish.image ? (
-                          <img
-                            src={api.fullImageUrl(dish.image)}
-                            alt={dish.name}
-                            className="w-12 h-12 rounded-lg object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-muted shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-body font-semibold text-foreground truncate">{dish.name}</p>
-                          <p className="text-xs text-muted-foreground font-body">{dish.price} тг</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant={onStop ? "outline" : "destructive"}
-                          className="shrink-0 rounded-full font-body gap-1"
-                          disabled={loading === dish.id}
-                          onClick={() => handleToggle(dish.id)}
-                        >
-                          {onStop ? (
-                            <><CheckCircle className="h-3.5 w-3.5" />Снять</>
+                        <div className="aspect-square w-full overflow-hidden">
+                          {dish.image ? (
+                            <img
+                              src={api.fullImageUrl(dish.image)}
+                              alt={dish.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
-                            <><Ban className="h-3.5 w-3.5" />На стоп</>
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-body">нет фото</div>
                           )}
-                        </Button>
+                        </div>
+                        <div className="p-2 flex flex-col gap-1">
+                          <p className="font-body font-semibold text-foreground text-sm leading-tight line-clamp-2">{dish.name}</p>
+                          <p className="text-xs text-muted-foreground font-body">{dish.price} тг</p>
+                          <Button
+                            size="sm"
+                            variant={onStop ? "outline" : "destructive"}
+                            className="w-full rounded-lg font-body gap-1 mt-1 text-xs h-7"
+                            disabled={loading === dish.id}
+                            onClick={(e) => { e.stopPropagation(); handleToggle(dish.id); }}
+                          >
+                            {onStop ? (
+                              <><CheckCircle className="h-3 w-3" />Снять</>
+                            ) : (
+                              <><Ban className="h-3 w-3" />На стоп</>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
