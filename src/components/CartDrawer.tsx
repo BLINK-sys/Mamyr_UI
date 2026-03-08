@@ -71,6 +71,11 @@ const CartDrawer = () => {
                         + {item.selectedAddons.map((a) => a.name).join(", ")}
                       </p>
                     )}
+                    {item.comboSelections && item.comboSelections.length > 0 && (
+                      <p className="text-xs text-muted-foreground font-body line-clamp-2">
+                        {item.comboSelections.map((c) => c.name).join(", ")}
+                      </p>
+                    )}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.dish.id, item.quantity - 1)}>

@@ -63,6 +63,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         locationIds: d.locationIds.map(String),
         stopLocationIds: (d.stopLocationIds || []).map(String),
         active: d.active ?? true,
+        isCombo: d.isCombo ?? false,
+        comboMin: d.comboMin ?? 1,
+        comboMax: d.comboMax ?? 4,
+        comboItemIds: (d.comboItemIds || []).map(String),
         addons: d.addons.map((a: any) => ({ ...a, id: String(a.id) })),
       })));
       if (bans) setBanners(bans.map((b: any) => ({ ...b, id: String(b.id) })));

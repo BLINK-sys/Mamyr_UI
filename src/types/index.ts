@@ -30,6 +30,10 @@ export interface Dish {
   locationIds: string[];
   stopLocationIds: string[];
   addons: Addon[];
+  isCombo?: boolean;
+  comboMin?: number;
+  comboMax?: number;
+  comboItemIds?: string[];
 }
 
 export interface Banner {
@@ -55,6 +59,7 @@ export interface CartItem {
   dish: Dish;
   quantity: number;
   selectedAddons: Addon[];
+  comboSelections?: { id: string; name: string }[];
 }
 
 export type OrderStatus = "new" | "cooking" | "ready" | "delivered";

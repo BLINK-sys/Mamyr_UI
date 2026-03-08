@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useData } from "@/contexts/DataContext";
 import AddonsModal from "@/components/AddonsModal";
+import ComboModal from "@/components/ComboModal";
 import type { Dish } from "@/types";
 import { api } from "@/services/api";
 
@@ -11,9 +12,12 @@ const MenuSection = () => {
   const { categories, dishes, selectedLocation } = useData();
   const { addItem } = useCart();
   const [addonDish, setAddonDish] = useState<Dish | null>(null);
+  const [comboDish, setComboDish] = useState<Dish | null>(null);
 
   const handleAdd = (dish: Dish) => {
-    if (dish.addons.length > 0) {
+    if (dish.isCombo) {
+      setComboDish(dish);
+    } else if (dish.addons.length > 0) {
       setAddonDish(dish);
     } else {
       addItem(dish);
@@ -101,6 +105,7 @@ const MenuSection = () => {
       </div>
 
       <AddonsModal dish={addonDish} open={!!addonDish} onClose={() => setAddonDish(null)} />
+      <ComboModal dish={comboDish} open={!!comboDish} onClose={() => setComboDish(null)} />
     </section>
   );
 };

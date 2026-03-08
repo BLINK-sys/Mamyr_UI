@@ -3,7 +3,7 @@ import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, X, Link, ClipboardPaste, Eye, EyeOff, Layers } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -33,6 +33,10 @@ const AdminDishes = () => {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [newAddonName, setNewAddonName] = useState("");
   const [newAddonPrice, setNewAddonPrice] = useState(0);
+  const [isCombo, setIsCombo] = useState(false);
+  const [comboMin, setComboMin] = useState(1);
+  const [comboMax, setComboMax] = useState(4);
+  const [comboItemIds, setComboItemIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -40,19 +44,35 @@ const AdminDishes = () => {
     setName(""); setDesc(""); setIngredients(""); setPrice(0); setWeight("");
     setImage(""); setImageUrl(""); setImagePreview(""); setImageFile(null); setImageMode("file");
     setActive(true); setCategoryId(""); setLocationIds([]); setAddons([]);
+    setIsCombo(false); setComboMin(1); setComboMax(4); setComboItemIds([]);
   };
 
-  const openNew = () => { setEditing(null); reset(); setCategoryId(categories[0]?.id || ""); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    reset();
+    setCategoryId(selectedCat !== "all" ? selectedCat : categories[0]?.id || "");
+    setLocationIds(locations.map((l) => l.id));
+    setOpen(true);
+  };
+
   const openEdit = (d: Dish) => {
     setEditing(d); setName(d.name); setDesc(d.desc); setIngredients(d.ingredients); setPrice(d.price);
     setWeight(d.weight); setImage(d.image); setImageUrl(""); setImageFile(null); setImageMode("file");
     setImagePreview(d.image ? api.fullImageUrl(d.image) : "");
     setActive(d.active); setCategoryId(d.categoryId); setLocationIds(d.locationIds); setAddons(d.addons);
+    setIsCombo(d.isCombo ?? false);
+    setComboMin(d.comboMin ?? 1);
+    setComboMax(d.comboMax ?? 4);
+    setComboItemIds(d.comboItemIds ?? []);
     setOpen(true);
   };
 
   const toggleLocation = (id: string) => {
     setLocationIds((prev) => prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]);
+  };
+
+  const toggleComboItem = (id: string) => {
+    setComboItemIds((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
   };
 
   const addAddon = () => {
@@ -109,6 +129,10 @@ const AdminDishes = () => {
         name, desc, ingredients, price, weight,
         image: image || "",
         active,
+        isCombo,
+        comboMin,
+        comboMax,
+        comboItemIds: comboItemIds.map(Number),
         categoryId: Number(categoryId),
         locationIds: locationIds.map(Number),
         addons: addons.map((a) => ({ name: a.name, price: a.price })),
@@ -150,6 +174,10 @@ const AdminDishes = () => {
         name: dish.name, desc: dish.desc, ingredients: dish.ingredients,
         price: dish.price, weight: dish.weight, image: dish.image,
         active: !dish.active,
+        isCombo: dish.isCombo ?? false,
+        comboMin: dish.comboMin ?? 1,
+        comboMax: dish.comboMax ?? 4,
+        comboItemIds: (dish.comboItemIds || []).map(Number),
         categoryId: Number(dish.categoryId),
         locationIds: dish.locationIds.map(Number),
         addons: dish.addons.map((a) => ({ name: a.name, price: a.price })),
@@ -173,6 +201,9 @@ const AdminDishes = () => {
 
   const sortedCategories = [...categories].sort((a, b) => a.order - b.order);
   const filteredDishes = selectedCat === "all" ? dishes : dishes.filter((d) => d.categoryId === selectedCat);
+
+  // Dishes available for combo selection (exclude current dish being edited)
+  const comboCandidates = dishes.filter((d) => !editing || d.id !== editing.id);
 
   return (
     <div>
@@ -214,6 +245,7 @@ const AdminDishes = () => {
               <div className="flex items-center gap-2">
                 <p className="font-body font-semibold text-foreground truncate">{dish.name}</p>
                 {!dish.active && <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-body shrink-0">неактивно</span>}
+                {dish.isCombo && <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-body shrink-0">комбо</span>}
                 {dish.stopLocationIds.length > 0 && <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full font-body shrink-0">стоп</span>}
               </div>
               <p className="text-xs text-muted-foreground font-body">{getCategoryName(dish.categoryId)} · {dish.price} тг · {dish.weight}</p>
@@ -228,12 +260,11 @@ const AdminDishes = () => {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className={`max-h-[90vh] overflow-y-auto ${isCombo ? "sm:max-w-5xl" : "sm:max-w-3xl"}`}>
           <DialogHeader><DialogTitle className="font-display">{editing ? "Редактировать блюдо" : "Новое блюдо"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid gap-6 ${isCombo ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
             {/* Left column: image, name, description, ingredients, price/weight */}
             <div className="space-y-4">
-              {/* Image section */}
               <div>
                 <p className="text-sm font-body font-semibold mb-2">Изображение</p>
 
@@ -310,7 +341,7 @@ const AdminDishes = () => {
               </div>
             </div>
 
-            {/* Right column: active, category, locations, addons */}
+            {/* Middle column: active, category, locations, combo toggle, addons */}
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -339,23 +370,74 @@ const AdminDishes = () => {
                   ))}
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-body font-semibold mb-2">Добавки</p>
-                <div className="space-y-2 mb-3">
-                  {addons.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between p-2 bg-accent/30 rounded-lg">
-                      <span className="text-sm font-body">{a.name} — {a.price} тг</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeAddon(a.id)}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                  ))}
+
+              {/* Combo toggle */}
+              <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-body font-semibold">Комбо-набор</span>
                 </div>
-                <div className="flex gap-2">
-                  <Input placeholder="Название" value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" />
-                  <Input type="number" placeholder="Цена" value={newAddonPrice || ""} onChange={(e) => setNewAddonPrice(Number(e.target.value))} className="w-24" />
-                  <Button variant="outline" size="sm" onClick={addAddon}>+</Button>
+                <Switch checked={isCombo} onCheckedChange={setIsCombo} />
+              </div>
+
+              {!isCombo && (
+                <div>
+                  <p className="text-sm font-body font-semibold mb-2">Добавки</p>
+                  <div className="space-y-2 mb-3">
+                    {addons.map((a) => (
+                      <div key={a.id} className="flex items-center justify-between p-2 bg-accent/30 rounded-lg">
+                        <span className="text-sm font-body">{a.name} — {a.price} тг</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeAddon(a.id)}><Trash2 className="h-3 w-3" /></Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input placeholder="Название" value={newAddonName} onChange={(e) => setNewAddonName(e.target.value)} className="flex-1" />
+                    <Input type="number" placeholder="Цена" value={newAddonPrice || ""} onChange={(e) => setNewAddonPrice(Number(e.target.value))} className="w-24" />
+                    <Button variant="outline" size="sm" onClick={addAddon}>+</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Third column: combo configuration (only when isCombo) */}
+            {isCombo && (
+              <div className="space-y-4">
+                <p className="text-sm font-body font-semibold">Настройка комбо</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-body mb-1">Минимум</p>
+                    <Input type="number" min={1} value={comboMin} onChange={(e) => setComboMin(Number(e.target.value))} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-body mb-1">Максимум</p>
+                    <Input type="number" min={1} value={comboMax} onChange={(e) => setComboMax(Number(e.target.value))} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-body mb-2">
+                    Выберите блюда для комбо ({comboItemIds.length} выбрано):
+                  </p>
+                  <div className="space-y-1 max-h-80 overflow-y-auto border border-border rounded-lg p-2">
+                    {comboCandidates.map((d) => (
+                      <label key={d.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-accent/50 transition-colors">
+                        <Checkbox
+                          checked={comboItemIds.includes(d.id)}
+                          onCheckedChange={() => toggleComboItem(d.id)}
+                        />
+                        {d.image && (
+                          <img src={api.fullImageUrl(d.image)} alt={d.name} className="w-8 h-8 rounded object-cover" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-body font-semibold truncate">{d.name}</p>
+                          <p className="text-xs text-muted-foreground font-body">{getCategoryName(d.categoryId)}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button onClick={save} disabled={saving} className="rounded-full font-body">

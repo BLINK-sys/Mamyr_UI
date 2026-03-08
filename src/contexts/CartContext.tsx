@@ -3,7 +3,7 @@ import type { CartItem, Dish, Addon } from "@/types";
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (dish: Dish, addons?: Addon[]) => void;
+  addItem: (dish: Dish, addons?: Addon[], comboSelections?: { id: string; name: string }[]) => void;
   removeItem: (dishId: string) => void;
   updateQuantity: (dishId: string, qty: number) => void;
   clearCart: () => void;
@@ -25,16 +25,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const addItem = useCallback((dish: Dish, addons: Addon[] = []) => {
+  const addItem = useCallback((dish: Dish, addons: Addon[] = [], comboSelections?: { id: string; name: string }[]) => {
     setItems((prev) => {
-      const key = dish.id + addons.map(a => a.id).sort().join(",");
+      const addonsKey = addons.map(a => a.id).sort().join(",");
+      const comboKey = (comboSelections || []).map(c => c.id).sort().join("|");
       const existing = prev.find(
-        (i) => i.dish.id === dish.id && i.selectedAddons.map(a => a.id).sort().join(",") === addons.map(a => a.id).sort().join(",")
+        (i) => i.dish.id === dish.id &&
+          i.selectedAddons.map(a => a.id).sort().join(",") === addonsKey &&
+          (i.comboSelections || []).map(c => c.id).sort().join("|") === comboKey
       );
       if (existing) {
         return prev.map((i) => i === existing ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { dish, quantity: 1, selectedAddons: addons }];
+      return [...prev, { dish, quantity: 1, selectedAddons: addons, comboSelections }];
     });
   }, []);
 
